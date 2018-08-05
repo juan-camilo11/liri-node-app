@@ -6,6 +6,7 @@ var keys = require("./keys");
 var Spotify = require("node-spotify-api");
 var request = require("request");
 var inquirer = require("inquirer");
+var fs = require("fs");
 
 //Spotify key initializtion
 var spotify = new Spotify(keys.spotify);
@@ -24,10 +25,10 @@ function spotSearch(song){
         var release = data.tracks.items[0].album.release_date;
 
     
-        console.log(artist);
-        console.log(album);
-        console.log(release);
-        console.log(song);
+        console.log("Artist: " + artist);
+        console.log("Album: " + album);
+        console.log("Release date: " + release);
+        console.log("Song name: " + song);
 
 
     });
@@ -44,15 +45,17 @@ function movieSearch(movie){
 
             //need to look at responses from IMDB, responses seem to change based on the movie
             //also if possible add some input validation
-            console.log(JSON.parse(body).Title);
-            console.log(JSON.parse(body).Year);
-            console.log(JSON.parse(body).imdbRating);
+            console.log("Movie title: " + JSON.parse(body).Title);
+            console.log("Release date: " + JSON.parse(body).Year);
+            console.log("Rating: " + JSON.parse(body).imdbRating);
             //rotten tomatoes rating
-            console.log(JSON.parse(body).Ratings[1].Value);
-            console.log(JSON.parse(body).Country);
-            console.log(JSON.parse(body).Language);
-            console.log(JSON.parse(body).Plot);
-            console.log(JSON.parse(body).Actors);
+            if(JSON.parse(body).Ratings[1]){
+                console.log("Rotten tomatoes rating: " + JSON.parse(body).Ratings[1].Value);
+            }
+            console.log("Produced in " + JSON.parse(body).Country);
+            console.log("Language: " + JSON.parse(body).Language);
+            console.log("Plot: " + JSON.parse(body).Plot);
+            console.log("Actors: " + JSON.parse(body).Actors);
         
         } else{
 
@@ -64,6 +67,27 @@ function movieSearch(movie){
     });
 
 
+}
+
+
+function randomThing(){
+
+    fs.readFile("random.txt", "utf8", function(error, data){
+        if(error){
+
+            console.log(error);
+        }
+
+        var strInd = data.search(/,/);
+        var randomSong = data.slice((strInd + 2), (data.length - 1));
+        console.log(randomSong);
+        spotSearch(randomSong);
+
+
+
+
+
+    });
 }
 
 //dont have API for twitter yet, I think
@@ -138,6 +162,7 @@ inquirer
                     });
                 break;
             case "do-what-it-says":
+                randomThing();
                 break;
         }
 
