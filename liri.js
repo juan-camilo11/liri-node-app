@@ -2,33 +2,62 @@
 require("dotenv").config();
 
 //import all the shizzzz we needzzzzz
-var keys = require("./keys");
-var Spotify = require("node-spotify-api");
-var request = require("request");
-var inquirer = require("inquirer");
-var fs = require("fs");
+const keys = require("./keys");
+const Spotify = require("node-spotify-api");
+const Twitter = require("twitter");
+const request = require("request");
+const inquirer = require("inquirer");
+const fs = require("fs");
 
 //Spotify key initializtion
-var spotify = new Spotify(keys.spotify);
+let spotify = new Spotify(keys.spotify);
+let client = new Twitter(keys.twitter);
+
+
+
+//twitter search function
+let tweetSearch = (userName) => {
+    console.log(userName);
+    let params = {screen_name: userName};
+    client.get('statuses/user_timeline', params, function(error, tweets, response){
+        if(!error){
+            tweets.forEach(function(stuff){
+
+                console.log(stuff.text);
+                console.log(stuff.created_at);
+
+            });
+        } else {
+            console.log(error);
+        }
+
+    });
+}
 
 //spotify seach function, takes the song the user inputs into the console and displays relevant info
 function spotSearch(song){
-    spotify.search({type: 'track', query: song, limit: "1"}, function(err, data){
+
+    if(!song){
+        var daSong = "The Sign";
+    } else{
+        daSong = song
+    }
+    spotify.search({type: 'track', query: daSong, limit: "1"}, function(err, data){
     
         if(err){
             console.log(err);
         }
     
-        var artist = data.tracks.items[0].album.artists[0].name;
-        var song = data.tracks.items[0].name;
-        var album = data.tracks.items[0].album.name;
-        var release = data.tracks.items[0].album.release_date;
+        let artist = data.tracks.items[0].album.artists[0].name;
+        let songName = data.tracks.items[0].name;
+        let album = data.tracks.items[0].album.name;
+        let release = data.tracks.items[0].album.release_date;
 
     
         console.log("Artist: " + artist);
         console.log("Album: " + album);
         console.log("Release date: " + release);
-        console.log("Song name: " + song);
+        console.log("Song name: " + songName);
 
 
     });
@@ -36,8 +65,12 @@ function spotSearch(song){
 
 //IMDB API search function, takes whatever movie the user requested and returns the relevant information
 function movieSearch(movie){
-    var movieName = movie;
-    var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=trilogy";
+    if(!movie){
+        var movieName = "Mr. Nobody";
+    } else{
+        movieName = movie;
+    }
+    let queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=trilogy";
 
     request(queryUrl, function(err, response, body){
 
@@ -63,8 +96,8 @@ function movieSearch(movie){
         }
 
 
-
     });
+    
 
 
 }
@@ -78,8 +111,8 @@ function randomThing(){
             console.log(error);
         }
 
-        var strInd = data.search(/,/);
-        var randomSong = data.slice((strInd + 2), (data.length - 1));
+        let strInd = data.search(/,/);
+        let randomSong = data.slice((strInd + 2), (data.length - 1));
         console.log(randomSong);
         spotSearch(randomSong);
 
@@ -90,8 +123,6 @@ function randomThing(){
     });
 }
 
-//dont have API for twitter yet, I think
-// var Twitter = require();
 
 
 
@@ -110,6 +141,44 @@ inquirer
 
         switch(userResponse.command) {
             case "my-tweets":
+                inquirer
+                    .prompt([
+                        {
+                            type: "input",
+                            message: "Which twitter account would you like to search?",
+                            name: "username"
+                        },
+                        {
+                            type: "confirm",
+                            message: "Are you sure",
+                            name: "confirm",
+                            default: true
+                        }
+                    ]).then(function(resp){
+                        if(resp.confirm){
+                            tweetSearch(resp.username);
+                            let command = "Command: " + JSON.stringify(userResponse.command) + "\n";
+                            let newline = "\n";
+                            fs.appendFileSync("log.txt", command, "utf8", function(err){
+                                if (err) {
+                                    return console.log(err);
+                                }
+
+
+                            });
+                            fs.appendFileSync("log.txt", newline, "utf8", function(err){
+                                if (err) {
+                                    return console.log(err);
+                                }
+
+
+                            });
+
+                        } else {
+                            console.log("Maybe next time then!");
+                        }
+
+                    });
                 break;
             case "spotify-this-song":
                 inquirer
@@ -130,6 +199,34 @@ inquirer
                     ]).then(function(resp){
                         if(resp.confirm){
                             spotSearch(resp.song);
+                            let command = "Command: " + JSON.stringify(userResponse.command) + "\n";
+                            if(resp.song){
+                                var songChosen = "Song searched: " + resp.song + "\n"; 
+                            } else{
+                                songChosen = "Song searched: The Sign \n";
+                            }
+                            let newline = "\n";
+                            fs.appendFileSync("log.txt", command, "utf8", function(err){
+                                if (err) {
+                                    return console.log(err);
+                                }
+
+
+                            });
+                            fs.appendFileSync("log.txt", songChosen, "utf8", function(err){
+                                if (err) {
+                                    return console.log(err);
+                                }
+
+
+                            });
+                            fs.appendFileSync("log.txt", newline, "utf8", function(err){
+                                if (err) {
+                                    return console.log(err);
+                                }
+
+
+                            });
                         } else {
                             console.log("Maybe next time then!");
                         }
@@ -153,8 +250,37 @@ inquirer
                         }
 
                     ]).then(function(resp){
+                        console.log(resp.movie);
                         if(resp.confirm){
                             movieSearch(resp.movie);
+                            let command = "Command: " + JSON.stringify(userResponse.command) + "\n";
+                            if(resp.movie){
+                                var movieChosen = "Movie searched: " + resp.movie + "\n"; 
+                            } else{
+                                movieChosen = "Movie searched: Mr.Nobody \n";
+                            }
+                            let newline = "\n";
+                            fs.appendFileSync("log.txt", command, "utf8", function(err){
+                                if (err) {
+                                    return console.log(err);
+                                }
+
+
+                            });
+                            fs.appendFileSync("log.txt", movieChosen, "utf8", function(err){
+                                if (err) {
+                                    return console.log(err);
+                                }
+
+
+                            });
+                            fs.appendFileSync("log.txt", newline, "utf8", function(err){
+                                if (err) {
+                                    return console.log(err);
+                                }
+
+
+                            });
                         } else {
                             console.log("Maybe next time then!");
                         }
