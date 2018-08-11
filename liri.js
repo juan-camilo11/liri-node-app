@@ -17,14 +17,20 @@ let client = new Twitter(keys.twitter);
 
 //twitter search function
 let tweetSearch = (userName) => {
+    let count = 0;
     console.log(userName);
     let params = {screen_name: userName};
     client.get('statuses/user_timeline', params, function(error, tweets, response){
         if(!error){
             tweets.forEach(function(stuff){
+                if(count < 20){
+                    count ++;
+                    console.log(stuff.text);
+                    console.log(stuff.created_at);
+                    console.log(`\n`);
+                } else {
 
-                console.log(stuff.text);
-                console.log(stuff.created_at);
+                }
 
             });
         } else {
@@ -32,6 +38,7 @@ let tweetSearch = (userName) => {
         }
 
     });
+    count = 0;
 }
 
 //spotify seach function, takes the song the user inputs into the console and displays relevant info
